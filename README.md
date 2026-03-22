@@ -1,10 +1,10 @@
-📝 Shadow-Logic Auditor (SLA) Starter Kit
+## 📝 Shadow-Logic Auditor (SLA) Starter Kit
 Overview
 
 The Shadow-Logic Auditor (SLA) is a 2026-standard development tool designed to prevent "AI-driven technical debt." It intercepts LLM-generated code (from Claude, ChatGPT, or Gemini), audits it against your project’s specific architectural rules, and automatically refactors violations before they hit your main branch.
 
-🚀 Quick Start
-'''
+## 🚀 Quick Start
+
     Initialize SLA: Run npx sla-cli init to scan your stack and generate .sla/rules.yaml.
 
     Configure Provider: Add your ANTHROPIC_API_KEY or OPENAI_API_KEY to your environment.
@@ -12,12 +12,12 @@ The Shadow-Logic Auditor (SLA) is a 2026-standard development tool designed to p
     Install IDE Plugin: (Optional) Install the VS Code / Cursor extension to catch violations in real-time.
 
     CI Integration: Add the provided GitHub Action to enforce rules on every Pull Request.
-'''
 
-📁 Folder Structure
+
+
 ---
 
-## Project Structure
+## 📁 Folder Structure
 
 ```
 
