@@ -15,8 +15,12 @@ The Shadow-Logic Auditor (SLA) is a 2026-standard development tool designed to p
 '''
 
 📁 Folder Structure
+---
 
-'''
+## Project Structure
+
+```
+
 .sla/
 ├── rules.yaml          # Your architectural source of truth
 ├── templates/          # Prompt templates for the Auto-Fixer
@@ -25,4 +29,10 @@ The Shadow-Logic Auditor (SLA) is a 2026-standard development tool designed to p
 scripts/
 └── sla-audit.ts        # The core logic engine
 
-'''
+```
+
+---
+
+## License
+
+MIT © 2026 Shadow-Logic Auditor (SLA)
