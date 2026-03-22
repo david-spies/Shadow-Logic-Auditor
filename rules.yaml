@@ -1,0 +1,18 @@
+📜 File 4: .sla/rules.yaml (The Guardrails)
+YAML
+
+version: 1.0
+project: "SaaS-Elite-2026"
+constraints:
+  - id: ARCH-01
+    name: "No Direct DB Access"
+    pattern: "import { prisma } from"
+    scope: "**/components/**"
+    requirement: "Components must use Server Actions or API routes, never the Prisma client directly."
+    templateRef: "db-modernizer"
+
+  - id: SEC-02
+    name: "Secret Safety"
+    pattern: "process.env.[A-Z0-9_]+"
+    scope: "**/client/**"
+    requirement: "Do not leak environment variables to the client. Use the SecretVault wrapper."
