@@ -1,0 +1,211 @@
+name: SLA Architectural Guardrail
+
+on:
+  pull_request:
+    branches: [main, develop, staging]
+    paths:
+      - "**.ts"
+      - "**.tsx"
+      - "**.js"
+      - "**.jsx"
+      - "**.py"
+      - "**.go"
+      - "**.rs"
+      - "**.sql"
+      - "**.yaml"
+      - "**.yml"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sla-audit:
+    name: Shadow-Logic Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      # ── Checkout ────────────────────────────────────────────────────────────
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # ── Node Setup ───────────────────────────────────────────────────────────
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      # ── Install SLA ──────────────────────────────────────────────────────────
+      - name: Install SLA Auditor
+        run: npm install -g @sla/auditor@latest
+
+      # ── Identify Changed Files ───────────────────────────────────────────────
+      - name: Identify changed files
+        id: changed
+        run: |
+          git diff --name-only origin/${{ github.base_ref }}...HEAD \
+            | grep -E '\.(ts|tsx|js|jsx|py|go|rs|sql|yaml|yml)$' \
+            | grep -v 'node_modules\|dist\|\.sla/' \
+            > changed_files.txt || true
+
+          echo "count=$(wc -l < changed_files.txt | tr -d ' ')" >> $GITHUB_OUTPUT
+          echo "Changed files:"
+          cat changed_files.txt
+
+      # ── Skip if no relevant changes ──────────────────────────────────────────
+      - name: Check if audit needed
+        if: steps.changed.outputs.count == '0'
+        run: |
+          echo "No source files changed. Skipping SLA audit."
+          exit 0
+
+      # ── Run Audit (Warn Pass) ────────────────────────────────────────────────
+      - name: Run SLA Audit
+        id: audit
+        if: steps.changed.outputs.count != '0'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          sla audit \
+            --files-from changed_files.txt \
+            --rules .sla/rules.yaml \
+            --json \
+            --output audit_results.json \
+            --ci || echo "AUDIT_FAILED=true" >> $GITHUB_ENV
+
+      # ── Auto-Fix Pass ────────────────────────────────────────────────────────
+      - name: Attempt Auto-Fix
+        id: autofix
+        if: env.AUDIT_FAILED == 'true' && secrets.ANTHROPIC_API_KEY != ''
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          sla audit \
+            --files-from changed_files.txt \
+            --rules .sla/rules.yaml \
+            --fix \
+            --json \
+            --output audit_results_fixed.json || true
+
+          # Check if any fixes were actually applied
+          FIXED=$(jq '.fixedFiles' audit_results_fixed.json 2>/dev/null || echo "0")
+          echo "fixed_count=$FIXED" >> $GITHUB_OUTPUT
+
+      # ── Commit Auto-Fixes ────────────────────────────────────────────────────
+      - name: Commit auto-fixes
+        if: steps.autofix.outputs.fixed_count != '0' && steps.autofix.outputs.fixed_count != ''
+        run: |
+          git config --global user.name "SLA-Auto-Fixer[bot]"
+          git config --global user.email "sla-bot@users.noreply.github.com"
+          git add -A
+          git diff --staged --quiet || \
+            git commit -m "🤖 [SLA] Automated Architectural Compliance Fix
+
+          Fixed ${{ steps.autofix.outputs.fixed_count }} file(s) to comply with .sla/rules.yaml
+
+          Co-authored-by: SLA-Bot <sla-bot@users.noreply.github.com>"
+          git push origin HEAD:${{ github.head_ref }}
+
+      # ── Post PR Comment ──────────────────────────────────────────────────────
+      - name: Post audit results to PR
+        if: always() && steps.changed.outputs.count != '0'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            // Prefer post-fix report if it exists
+            const reportPath = fs.existsSync('audit_results_fixed.json')
+              ? 'audit_results_fixed.json'
+              : 'audit_results.json';
+
+            if (!fs.existsSync(reportPath)) return;
+
+            const report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
+            const passed = report.failedFiles === 0;
+            const fixed  = report.fixedFiles  >  0;
+
+            const statusIcon  = passed ? '✅' : '❌';
+            const statusLabel = passed ? 'PASSED' : 'FAILED';
+
+            let body = `## ${statusIcon} SLA Architectural Audit — ${statusLabel}\n\n`;
+            body += `| Metric | Value |\n|--------|-------|\n`;
+            body += `| Files scanned | ${report.totalFiles} |\n`;
+            body += `| Passed | ${report.passedFiles} |\n`;
+            body += `| Failed | ${report.failedFiles} |\n`;
+            body += `| Auto-Fixed | ${report.fixedFiles} |\n`;
+            body += `| Total violations | ${report.totalViolations} |\n\n`;
+
+            if (report.totalViolations > 0) {
+              body += `### Violations by Severity\n`;
+              if (report.criticalCount > 0) body += `- 🔴 **CRITICAL**: ${report.criticalCount}\n`;
+              if (report.highCount     > 0) body += `- 🟠 **HIGH**: ${report.highCount}\n`;
+              if (report.mediumCount   > 0) body += `- 🟡 **MEDIUM**: ${report.mediumCount}\n`;
+              if (report.lowCount      > 0) body += `- 🔵 **LOW**: ${report.lowCount}\n`;
+              body += '\n';
+            }
+
+            const failing = report.results.filter(r => r.violations.length > 0);
+            if (failing.length > 0) {
+              body += `### Files with Violations\n`;
+              for (const file of failing.slice(0, 10)) {
+                body += `\n**\`${file.filePath}\`**\n`;
+                for (const v of file.violations.slice(0, 5)) {
+                  body += `- \`[${v.ruleId}]\` **${v.ruleName}** (${v.severity}) — Line ${v.location.line}\n`;
+                  body += `  > ${v.requirement}\n`;
+                  if (v.advice) body += `  > 💡 ${v.advice}\n`;
+                }
+              }
+            }
+
+            if (fixed) {
+              body += `\n---\n> 🤖 **SLA Auto-Fixer** resolved ${report.fixedFiles} file(s) and pushed a commit to this branch. Please review the changes.\n`;
+            }
+
+            if (!passed && !fixed) {
+              body += `\n---\n> ❌ Violations remain. Run \`sla audit --fix\` locally, or add \`ANTHROPIC_API_KEY\` to repo secrets to enable automated fixing.\n`;
+            }
+
+            // Find and update existing SLA comment, or create new one
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo:  context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const existing = comments.find(c =>
+              c.user?.login === 'github-actions[bot]' &&
+              c.body?.includes('SLA Architectural Audit')
+            );
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner:      context.repo.owner,
+                repo:       context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner:        context.repo.owner,
+                repo:         context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+
+      # ── Fail CI on unresolved violations ─────────────────────────────────────
+      - name: Enforce gate
+        if: env.AUDIT_FAILED == 'true'
+        run: |
+          REMAINING=$(jq '.failedFiles' audit_results_fixed.json 2>/dev/null || echo "1")
+          if [ "$REMAINING" -gt "0" ]; then
+            echo "::error::SLA Audit failed with unresolved violations. See PR comment for details."
+            exit 1
+          fi

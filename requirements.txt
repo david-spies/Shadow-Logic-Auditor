@@ -1,0 +1,67 @@
+# ============================================================
+# Shadow-Logic Auditor v2.0 — Dependency Manifest
+# ============================================================
+# This project is Node.js/TypeScript-based.
+# The authoritative dependency list is package.json.
+# This file mirrors it for teams that use requirements.txt
+# style documentation for cross-language reference.
+# ============================================================
+
+# ── Runtime (Node.js >= 20 required) ────────────────────────
+
+# LLM Provider SDKs
+@anthropic-ai/sdk==0.27.0          # Claude API — primary auto-fix engine
+openai==4.52.0                      # OpenAI GPT-4o — alternate provider
+@google/generative-ai==0.15.0      # Gemini — alternate provider
+
+# CLI Framework
+commander==12.1.0                   # CLI argument parsing and sub-commands
+ora==8.1.0                          # Terminal spinners
+enquirer==2.4.1                     # Interactive prompts (sla init)
+boxen==8.0.1                        # Bordered terminal output
+chalk==5.3.0                        # ANSI terminal colors
+
+# Config & Parsing
+js-yaml==4.1.0                      # YAML rule file parsing
+zod==3.23.8                         # Runtime config schema validation
+
+# File System
+fast-glob==3.3.2                    # Fast file pattern matching
+glob==11.0.0                        # Legacy glob support
+ignore==5.3.2                       # .gitignore-style pattern exclusion
+micromatch==4.0.8                   # Glob scope matching for rules
+diff==7.0.0                         # Diff generation for auto-fix previews
+
+# Utilities
+node-cache==5.1.2                   # In-memory config caching
+pino==9.4.0                         # Structured logging
+pino-pretty==11.2.2                 # Human-readable log formatting
+dotenv==16.4.5                      # .env file loading
+semver==7.6.3                       # Version comparisons
+strip-ansi==7.1.0                   # Strip color codes from CI output
+
+# ── Dev Dependencies ────────────────────────────────────────
+
+typescript==5.5.4
+@types/node==22.0.0
+@types/js-yaml==4.0.9
+@types/micromatch==4.0.9
+@types/diff==5.2.3
+@types/semver==7.5.8
+jest==29.7.0
+ts-jest==29.2.4
+@types/jest==29.5.12
+eslint==9.8.0
+@typescript-eslint/eslint-plugin==8.1.0
+@typescript-eslint/parser==8.1.0
+
+# ── Peer Requirements ───────────────────────────────────────
+# node >= 20.0.0
+# npm  >= 10.0.0  (or pnpm >= 9.0.0)
+
+# ── Environment Variables ───────────────────────────────────
+# ANTHROPIC_API_KEY  — Required for Anthropic auto-fix
+# OPENAI_API_KEY     — Required for OpenAI auto-fix
+# GEMINI_API_KEY     — Required for Gemini auto-fix
+# SLA_RULES_PATH     — Override default .sla/rules.yaml path
+# SLA_LOG_LEVEL      — Logging level: silent|info|debug (default: info)

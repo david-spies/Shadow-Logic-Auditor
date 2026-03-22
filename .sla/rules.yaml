@@ -1,0 +1,60 @@
+version: "2.0"
+project: "my-project"
+description: "SLA architectural guardrails — customize for your stack"
+enforcementLevel: block
+llmProvider: anthropic
+ignorePatterns:
+  - "**/*.test.ts"
+  - "**/*.spec.ts"
+  - "**/__mocks__/**"
+  - "**/migrations/**"
+
+constraints:
+  # ── SECURITY (Universal) ────────────────────────────────────────────────────
+  - id: SEC-001
+    name: No Hardcoded Secrets
+    category: security
+    severity: CRITICAL
+    pattern:
+      regex: "(password|secret|api_key|apikey|token)\\s*=\\s*['\"][A-Za-z0-9+/=_-]{8,}['\"]"
+    requirement: Never hardcode secrets in source code. Use environment variables or a secrets manager.
+    advice: Replace the literal value with `process.env.YOUR_SECRET_NAME`.
+    tags: [security, secrets]
+
+  - id: SEC-002
+    name: No eval() Usage
+    category: security
+    severity: CRITICAL
+    pattern:
+      regex: "\\beval\\s*\\("
+    requirement: "`eval()` is forbidden due to code injection risk."
+    advice: Use `JSON.parse()` or refactor the logic to avoid dynamic evaluation.
+    tags: [security]
+
+  # ── ARCHITECTURE ────────────────────────────────────────────────────────────
+  - id: ARCH-001
+    name: No Direct DB Access in Components
+    category: architecture
+    severity: HIGH
+    pattern:
+      regex: "import.*prisma.*from|import.*db.*from.*@/lib/db"
+      scope: "**/components/**"
+    requirement: UI components must not import database clients directly.
+    advice: Use Server Actions, tRPC procedures, or API routes as the data access boundary.
+    autoFix:
+      useLLM: true
+    tags: [architecture, prisma, database]
+
+  # ── PERFORMANCE ─────────────────────────────────────────────────────────────
+  - id: PERF-001
+    name: No useEffect for Initial Data Fetching
+    category: performance
+    severity: MEDIUM
+    pattern:
+      regex: "useEffect\\([^)]*fetch\\("
+      scope: "**/components/**"
+    requirement: Use React Query, SWR, or Server Components for data fetching.
+    advice: Move fetch calls to a Server Component or use `useQuery` from TanStack Query.
+    autoFix:
+      useLLM: true
+    tags: [react, performance]
