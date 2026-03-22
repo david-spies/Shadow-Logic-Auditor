@@ -2,7 +2,6 @@
 // src/cli/audit.ts — `sla audit` entry point
 
 import { Command } from "commander";
-import * as path from "path";
 import type { AuditOptions, Severity, RuleCategory } from "../types.js";
 import { ConfigLoader } from "../engine/config-loader.js";
 import { RuleEngine } from "../engine/rule-engine.js";

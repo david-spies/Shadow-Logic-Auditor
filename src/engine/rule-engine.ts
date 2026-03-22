@@ -1,7 +1,5 @@
 // src/engine/rule-engine.ts — Pattern matching engine with multi-pass analysis
 
-import * as fs from "fs";
-import * as path from "path";
 import micromatch from "micromatch";
 import type {
   SLARule,

@@ -24,7 +24,8 @@ program
   .alias("a");
 
 program
-  .command("rules", "List all active rules from the current config")
+  .command("rules")
+  .description("List all active rules from the current config")
   .option("-r, --rules <path>", "Path to rules YAML file", ".sla/rules.yaml")
   .action(async (opts) => {
     const { ConfigLoader } = await import("../engine/config-loader.js");
@@ -51,7 +52,7 @@ program
           const fix = r.autoFix
             ? chalk.cyan(" [auto-fix]")
             : "";
-          const sev: Record<string, chalk.Chalk> = {
+          const sev: Record<string, (s: string) => string> = {
             CRITICAL: chalk.red.bold,
             HIGH: chalk.red,
             MEDIUM: chalk.yellow,

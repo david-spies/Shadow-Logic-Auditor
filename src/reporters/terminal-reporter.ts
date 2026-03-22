@@ -3,7 +3,7 @@
 import chalk from "chalk";
 import type { AuditReport, FileAuditResult, Violation, Severity } from "../types.js";
 
-const SEVERITY_COLORS: Record<Severity, chalk.Chalk> = {
+const SEVERITY_COLORS: Record<Severity, (s: string) => string> = {
   CRITICAL: chalk.bgRed.white.bold,
   HIGH: chalk.red.bold,
   MEDIUM: chalk.yellow.bold,

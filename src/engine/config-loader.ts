@@ -4,7 +4,7 @@ import * as fs from "fs";
 import * as path from "path";
 import * as yaml from "js-yaml";
 import { z } from "zod";
-import type { SLARulesConfig, SLARule } from "../types.js";
+import type { SLARulesConfig } from "../types.js";
 
 // ─── Zod Schemas ──────────────────────────────────────────────────────────────
 
