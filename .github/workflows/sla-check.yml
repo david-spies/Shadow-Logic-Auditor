@@ -1,6 +1,8 @@
 name: SLA Architectural Guardrail
 
 on:
+  push:
+    branches: [main]
   pull_request:
     branches: [main, develop, staging]
     paths:

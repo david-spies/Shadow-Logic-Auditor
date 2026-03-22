@@ -1,10 +1,10 @@
-# Shadow-Logic Auditor (SLA) v2.0
+## Shadow-Logic Auditor (SLA) v2.0
 
 > **AI-driven technical debt prevention for teams that ship fast.**
 > Intercepts LLM-generated code, audits it against your architectural rules, and auto-corrects violations before they reach your main branch.
 
-[![CI](https://img.shields.io/github/actions/workflow/status/david-spies/sla-auditor/sla-check.yml?label=SLA%20Audit)](https://github.com/david-spies/sla-auditor)
-[![npm](https://img.shields.io/npm/v/@sla/auditor)](https://www.npmjs.com/package/@sla/auditor)
+[![CI](https://github.com/david-spies/sla-auditor/actions/workflows/sla-check.yml/badge.svg)](https://github.com/david-spies/sla-auditor/actions/workflows/sla-check.yml)
+[![version](https://img.shields.io/github/package-json/v/david-spies/sla-auditor)](https://github.com/david-spies/sla-auditor)
 [![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen)](https://nodejs.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
